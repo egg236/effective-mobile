@@ -1,0 +1,447 @@
+openapi: 3.0.0
+info:
+  title: Описание API
+  description: Здесь содержаться описания всех методов, реализованные в REST-сервисе для агрегации данных об онлайн-подписках пользователей.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8090
+    description: Локальный сервер
+
+paths:
+  /record:
+    post:
+      summary: Создать новую запись
+      description: Создает новую запись в базе данных на основе переданных данных.
+      requestBody:
+        description: Объект записи для создания. ID назначается автоматически.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordInput'
+      responses:
+        '201':
+          description: Запись успешно создана. Возвращает ID новой записи.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_success:
+                    type: boolean
+                    example: true
+                  result:
+                    type: integer
+                    description: ID созданной записи.
+                    example: 1
+        '400':
+          description: Неверный запрос. Например, ошибка валидации данных.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                empty_uuid:
+                  description: "Если user_id пришел пустым."
+                  value:
+                    is_success: false
+                    result: "userID cant be zero string"
+                invalid_uuid:
+                  description: "Если user_id не является валидным UUID."
+                  value:
+                    is_success: false
+                    result: "userID must be UUID"
+                negative_price:
+                  description: "Если цена меньше нуля."
+                  value:
+                    is_success: false
+                    result: "price cant be less than zero"
+                wrong_date_format:
+                  description: "Если дата указана в неверном формате."
+                  value:
+                    is_success: false
+                    result: "wrong date format"
+                wrong_date_range:
+                  description: "Если начала позже даты конца."
+                  value:
+                    is_success: false
+                    result: "wrong date range"
+                empty_service_name:
+                  description: "Если имя сервиса не указано."
+                  value:
+                    is_success: false
+                    result: "serviceName cant be zero string"
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error internal server"
+    put:
+      summary: Обновить существующую запись
+      description: Обновляет существующую запись по ее ID.
+      requestBody:
+        description: Объект записи с обновленными данными. `ID` является обязательным.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Record'
+      responses:
+        '204':
+          description: Запись успешно обновлена.
+        '400':
+          description: Неверный запрос. Например, неверный формат данных или отсутствующий ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                non_positive_record_id:
+                  description: "Если recordID не указан или он меньше нуля."
+                  value:
+                    is_success: false
+                    result: "record id must be positive"
+                empty_uuid:
+                  description: "Если user_id пришел пустым."
+                  value:
+                    is_success: false
+                    result: "userID cant be zero string"
+                invalid_uuid:
+                  description: "Если user_id не является валидным UUID."
+                  value:
+                    is_success: false
+                    result: "userID must be UUID"
+                negative_price:
+                  description: "Если цена меньше нуля."
+                  value:
+                    is_success: false
+                    result: "price cant be less than zero"
+                wrong_date_format:
+                  description: "Если дата указана в неверном формате."
+                  value:
+                    is_success: false
+                    result: "wrong date format"
+                wrong_date_range:
+                  description: "Если начала позже даты конца."
+                  value:
+                    is_success: false
+                    result: "wrong date range"
+                empty_service_name:
+                  description: "Если имя сервиса не указано."
+                  value:
+                    is_success: false
+                    result: "serviceName cant be zero string"
+
+        '404':
+          description: Запись не найдена.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error not found"
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error internal server"
+
+  /record/{recordID}:
+    get:
+      summary: Получить запись по ID
+      description: Возвращает одну запись по ее уникальному идентификатору.
+      parameters:
+        - name: recordID
+          in: path
+          required: true
+          description: Уникальный идентификатор записи.
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Успешный ответ.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_success:
+                    type: boolean
+                    example: true
+                  result:
+                    $ref: '#/components/schemas/Record'
+        '400':
+          description: Неверный запрос. Например, неверный формат данных или отсутствующий ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_record_id:
+                  description: Если recordID пришел в нестандартном формате.
+                  value:
+                    is_success: false
+                    result: "invalid recordID"
+                invalid_empty_id:
+                  description: Если recordID пришел пустым.
+                  value:
+                    is_success: false
+                    result: "record id cant be zero string"
+        '404':
+          description: Запись не найдена.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error not found"
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error internal server"
+    delete:
+      summary: Удалить запись по ID
+      description: Удаляет запись из базы данных по ее уникальному идентификатору.
+      parameters:
+        - name: recordID
+          in: path
+          required: true
+          description: Уникальный идентификатор записи для удаления.
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Запись успешно удалена.
+        '400':
+          description: Неверный ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_record_id:
+                  description: Если recordID пришел в нестандартном формате.
+                  value:
+                    is_success: false
+                    result: "invalid recordID"
+                invalid_empty_id:
+                  description: Если recordID пришел пустым.
+                  value:
+                    is_success: false
+                    result: "record id cant be zero string"
+        '404':
+          description: Запись не найдена.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error not found"
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error internal server"
+
+  /records:
+    get:
+      summary: Получить все записи
+      description: Возвращает список всех записей в системе, принимая фильтры по ID пользователя и имени сервиса. Если записей нет, то возвращает успех и пустой массив.
+      parameters:
+        - name: userID
+          in: query
+          required: false
+          description: UUID пользователя для фильтрации.
+          schema:
+            type: string
+            format: uuid
+        - name: serviceName
+          in: query
+          required: false
+          description: Название сервиса для фильтрации.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Успешный ответ.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_success:
+                    type: boolean
+                    example: true
+                  result:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Record'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error internal server"
+
+  /records/sum:
+    get:
+      summary: Получить сумму стоимостей записей
+      description: Возвращает сумму стоимостей всех записей, удовлетворяющих фильтрам.
+      parameters:
+        - name: userID
+          in: query
+          required: false
+          description: UUID пользователя для фильтрации.
+          schema:
+            type: string
+            format: uuid
+        - name: serviceName
+          in: query
+          required: false
+          description: Название сервиса для фильтрации.
+          schema:
+            type: string
+        - name: dateStart
+          in: query
+          required: false
+          description: Дата начала периода в формате ММ-ГГГГ.
+          schema:
+            type: string
+            example: "07-2025"
+        - name: dateEnd
+          in: query
+          required: false
+          description: Дата окончания периода в формате ММ-ГГГГ.
+          schema:
+            type: string
+            example: "07-2025"
+      responses:
+        '200':
+          description: Успешный ответ.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_success:
+                    type: boolean
+                    example: true
+                  result:
+                    type: integer
+                    description: Сумма стоимостей записей.
+                    example: 1500
+        '400':
+          description: Неверный формат даты.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                wrong_date_format:
+                  description: "Если дата указана в неверном формате."
+                  value:
+                    is_success: false
+                    result: "wrong date format"
+                wrong_date_range:
+                  description: "Если начала позже даты конца."
+                  value:
+                    is_success: false
+                    result: "wrong date range"
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                is_success: false
+                result: "error internal server"
+
+components:
+  schemas:
+    Record:
+      type: object
+      description: Основная сущность записи.
+      properties:
+        id:
+          type: integer
+          description: Уникальный идентификатор.
+          example: 1
+        service_name:
+          type: string
+          description: Название сервиса.
+          example: "Yandex Plus"
+        price:
+          type: integer
+          description: Цена.
+          example: 400
+        user_id:
+          type: string
+          format: uuid
+          description: ID пользователя (UUID).
+          example: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+        start_date:
+          type: string
+          description: Дата начала в формате ММ-ГГГГ.
+          example: "07-2024"
+        end_date:
+          type: string
+          description: Дата окончания в формате ММ-ГГГГ (опционально).
+          example: "07-2025"
+    RecordInput:
+      type: object
+      description: Сущность записи для создания (без ID).
+      properties:
+        service_name:
+          type: string
+          description: Название сервиса.
+          example: "Yandex Plus"
+        price:
+          type: integer
+          description: Цена.
+          example: 400
+        user_id:
+          type: string
+          format: uuid
+          description: ID пользователя (UUID).
+          example: "60601fee-2bf1-4721-ae6f-7636e79a0cba"
+        start_date:
+          type: string
+          description: Дата начала в формате ММ-ГГГГ.
+          example: "07-2025"
+        end_date:
+          type: string
+          description: Дата окончания в формате ММ-ГГГГ (опционально).
+          example: "07-2025"
+    ErrorResponse:
+      type: object
+      properties:
+        is_success:
+          type: boolean
+          example: false
+        result:
+          type: string
+          description: Сообщение об ошибке.
